@@ -6,7 +6,6 @@ import {
   BarChart, Bar,
   XAxis, YAxis, Tooltip, CartesianGrid 
 } from 'recharts';
-import { Wallet, TrendingUp, CheckCircle, Flame, Target, Factory } from 'lucide-react';
 
 interface DashboardViewProps {
   records: LogisticsRecord[];
@@ -15,321 +14,262 @@ interface DashboardViewProps {
   setGlobalCosts: (costs: GlobalCosts) => void;
 }
 
-export const DashboardView = ({ records, darkMode, globalCosts, setGlobalCosts }: DashboardViewProps) => {
+// Win2K Panel component
+const Win2kPanel = ({ title, children, style }: { title: string; children: React.ReactNode; style?: React.CSSProperties }) => (
+  <fieldset style={{
+    border: '2px solid #808080',
+    borderTop: '2px solid #808080',
+    borderLeft: '2px solid #808080',
+    borderRight: '2px solid #ffffff',
+    borderBottom: '2px solid #ffffff',
+    padding: '4px 8px 8px 8px',
+    background: '#d4d0c8',
+    margin: 0,
+    ...style,
+  }}>
+    <legend style={{ fontSize: '11px', fontWeight: 'bold', padding: '0 4px', color: '#000080', background: '#d4d0c8' }}>
+      {title}
+    </legend>
+    {children}
+  </fieldset>
+);
+
+const Win2kKpi = ({ label, value, color }: { label: string; value: string; color?: string }) => (
+  <div style={{
+    background: '#d4d0c8',
+    borderTop: '2px solid #ffffff',
+    borderLeft: '2px solid #ffffff',
+    borderRight: '2px solid #808080',
+    borderBottom: '2px solid #808080',
+    boxShadow: 'inset -1px -1px 0 #404040, inset 1px 1px 0 #e8e4dc',
+    padding: '6px 10px',
+    flex: 1,
+    minWidth: 120,
+  }}>
+    <div style={{ fontSize: '10px', color: '#808080', fontWeight: 'bold', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.3px' }}>{label}</div>
+    <div style={{
+      background: '#ffffff',
+      borderTop: '2px solid #808080',
+      borderLeft: '2px solid #808080',
+      borderRight: '2px solid #e8e4dc',
+      borderBottom: '2px solid #e8e4dc',
+      boxShadow: 'inset 1px 1px 0 #404040',
+      padding: '4px 8px',
+      fontSize: '16px',
+      fontWeight: 'bold',
+      color: color || '#000080',
+      fontFamily: "'Courier New', 'Lucida Console', monospace",
+    }}>
+      {value}
+    </div>
+  </div>
+);
+
+export const DashboardView = ({ records, globalCosts, setGlobalCosts }: DashboardViewProps) => {
 
   const totalReceita = records.reduce((acc, r) => acc + r.valorFaturado, 0);
   const totalCustoMotoristas = records.reduce((acc, r) => acc + r.vlrTotal, 0);
-  
   const totalCustosFixos = globalCosts.aluguel + globalCosts.combustivel + globalCosts.manutencao + globalCosts.seguro;
   const totalCustoGlobal = totalCustoMotoristas + totalCustosFixos;
   const totalMargemReal = totalReceita - totalCustoGlobal;
-  
   const pctCustoTotal = totalReceita > 0 ? (totalCustoGlobal / totalReceita) * 100 : 0;
   const pctMargemReal = totalReceita > 0 ? (totalMargemReal / totalReceita) * 100 : 0;
-
   const totalEntregas = records.reduce((acc, r) => acc + r.entregas, 0);
   const totalInsucessos = records.reduce((acc, r) => acc + r.insucessos, 0);
   const sla = totalEntregas + totalInsucessos > 0 ? (totalEntregas / (totalEntregas + totalInsucessos)) * 100 : 0;
-
   const tckReceita = totalEntregas > 0 ? totalReceita / totalEntregas : 0;
   const tckCusto = totalEntregas > 0 ? totalCustoGlobal / totalEntregas : 0;
   const tckLucro = totalEntregas > 0 ? totalMargemReal / totalEntregas : 0;
 
-  // Bottom Left: Receita por Operação
   const operacaoData = useMemo(() => {
     const map = new Map<string, { name: string, receita: number }>();
-    records.forEach(r => {
-      const key = r.operacao || 'Outros';
-      const existing = map.get(key) || { name: key, receita: 0 };
-      existing.receita += r.valorFaturado;
-      map.set(key, existing);
-    });
+    records.forEach(r => { const key = r.operacao || 'Outros'; const e = map.get(key) || { name: key, receita: 0 }; e.receita += r.valorFaturado; map.set(key, e); });
     return Array.from(map.values()).sort((a, b) => b.receita - a.receita).slice(0, 6);
   }, [records]);
 
-  // Bottom Center: Margem por Contrato (Horizontal Bar)
   const contratoData = useMemo(() => {
     const map = new Map<string, { name: string, margem: number }>();
-    records.forEach(r => {
-      const key = r.tipoContrato || 'Avulso';
-      const existing = map.get(key) || { name: key, margem: 0 };
-      existing.margem += r.lucroBruto;
-      map.set(key, existing);
-    });
-    return Array.from(map.values())
-      .sort((a, b) => b.margem - a.margem)
-      .slice(0, 6);
+    records.forEach(r => { const key = r.tipoContrato || 'Avulso'; const e = map.get(key) || { name: key, margem: 0 }; e.margem += r.lucroBruto; map.set(key, e); });
+    return Array.from(map.values()).sort((a, b) => b.margem - a.margem).slice(0, 6);
   }, [records]);
 
-  // Bottom Right: Analise por Motoristas
   const motoristasData = useMemo(() => {
     const map = new Map<string, { name: string, receita: number, margem: number }>();
-    records.forEach(r => {
-      const key = r.motorista || 'Sem Nome';
-      const existing = map.get(key) || { name: key, receita: 0, margem: 0 };
-      existing.receita += r.valorFaturado;
-      existing.margem += r.lucroBruto;
-      map.set(key, existing);
-    });
-    
+    records.forEach(r => { const key = r.motorista || 'Sem Nome'; const e = map.get(key) || { name: key, receita: 0, margem: 0 }; e.receita += r.valorFaturado; e.margem += r.lucroBruto; map.set(key, e); });
     const arr = Array.from(map.values()).sort((a, b) => b.receita - a.receita);
     const maxReceita = Math.max(...arr.map(a => a.receita), 1);
     const maxMargem = Math.max(...arr.map(a => a.margem), 1);
-
-    return arr.map(m => ({
-      ...m,
-      pctReceitaWidth: (m.receita / maxReceita) * 100,
-      pctMargemWidth: (m.margem / maxMargem) * 100,
-      margemPctVal: m.receita > 0 ? (m.margem / m.receita) * 100 : 0
-    }));
+    return arr.map(m => ({ ...m, pctReceitaWidth: (m.receita / maxReceita) * 100, pctMargemWidth: (m.margem / maxMargem) * 100, margemPctVal: m.receita > 0 ? (m.margem / m.receita) * 100 : 0 }));
   }, [records]);
 
   if (records.length === 0) {
     return (
-      <div className={`flex flex-col items-center justify-center p-16 rounded-3xl border border-dashed ${darkMode ? 'border-slate-700 text-slate-400' : 'border-slate-300 text-slate-500'}`}>
-        <Wallet size={48} className={`mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
-        <h2 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Dashboard Sem Dados</h2>
-        <p className="text-center">Acesse a aba "Planilha" e importe um arquivo CSV ou adicione um registro manualmente.</p>
+      <div style={{ padding: 32, textAlign: 'center', color: '#808080', fontFamily: "'Tahoma', 'MS Sans Serif', Arial, sans-serif", fontSize: '11px' }}>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
+        <div style={{ fontWeight: 'bold', color: '#000080', marginBottom: 4 }}>Dashboard Sem Dados</div>
+        <div>Acesse a aba "Planilha" e importe um arquivo CSV ou adicione um registro manualmente.</div>
       </div>
     );
   }
 
-  const panelBg = darkMode ? 'bg-[#111827] border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-sm';
-  const textTitle = darkMode ? 'text-slate-300' : 'text-slate-500';
-  const textValue = darkMode ? 'text-white' : 'text-slate-800';
-  
-  const blueTheme = { glow: 'shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)]', iconText: 'text-blue-400', iconBg: 'bg-blue-900/30' };
-  const orangeTheme = { glow: 'shadow-[0_0_30px_-5px_rgba(249,115,22,0.3)]', iconText: 'text-orange-400', iconBg: 'bg-orange-900/30' };
-  const greenTheme = { glow: 'shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)]', iconText: 'text-emerald-400', iconBg: 'bg-emerald-900/30' };
-  const purpleTheme = { glow: 'shadow-[0_0_30px_-5px_rgba(168,85,247,0.3)]', iconText: 'text-purple-400', iconBg: 'bg-purple-900/30' };
+  const chartTooltipStyle = { backgroundColor: '#ffffff', border: '1px solid #808080', borderRadius: 0, fontFamily: "'Tahoma', 'MS Sans Serif', Arial, sans-serif", fontSize: '11px', color: '#000000' };
 
-  const CostInput = ({ label, value, field }: { label: string, value: number, field: keyof GlobalCosts }) => (
-    <div className="flex flex-col">
-      <label className={`text-xs font-semibold uppercase mb-1 ${textTitle}`}>{label}</label>
-      <div className="relative">
-        <span className={`absolute left-3 top-2.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>R$</span>
-        <input type="number" 
-           className={`w-full pl-8 pr-3 py-2 rounded-xl text-sm font-medium border focus:ring-2 outline-none transition-all ${darkMode ? 'bg-slate-900 border-slate-700 focus:ring-indigo-500 text-white' : 'bg-slate-50 border-slate-200 focus:ring-blue-500 text-slate-800'}`}
-           value={value || ''}
-           placeholder="0"
-           onChange={e => setGlobalCosts({...globalCosts, [field]: parseFloat(e.target.value) || 0})}
+  const CostInput = ({ label, value, field }: { label: string; value: number; field: keyof GlobalCosts }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <label style={{ fontSize: '10px', fontWeight: 'bold', color: '#000080', textTransform: 'uppercase' }}>{label}</label>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <span style={{
+          background: '#d4d0c8',
+          borderTop: '2px solid #808080',
+          borderLeft: '2px solid #808080',
+          borderRight: 'none',
+          borderBottom: '2px solid #e8e4dc',
+          padding: '2px 4px',
+          fontSize: '11px',
+          color: '#808080',
+          boxShadow: 'inset 1px 1px 0 #404040',
+        }}>R$</span>
+        <input
+          type="number"
+          className="win-input"
+          style={{ flex: 1, borderRadius: 0 }}
+          value={value || ''}
+          placeholder="0"
+          onChange={e => setGlobalCosts({ ...globalCosts, [field]: parseFloat(e.target.value) || 0 })}
         />
       </div>
     </div>
   );
 
   return (
-    <div className={`space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+    <div style={{ fontFamily: "'Tahoma', 'MS Sans Serif', Arial, sans-serif", fontSize: '11px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       
-      {/* Top Level KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        {/* Receita Card */}
-        <div className={`p-6 rounded-2xl border relative overflow-hidden flex flex-col h-32 ${panelBg} ${darkMode ? blueTheme.glow : ''}`}>
-          <div className="flex items-start justify-between z-10 mb-2">
-            <p className={`text-sm font-semibold tracking-wider uppercase ${textTitle}`}>Fatorado Total</p>
-            <Wallet size={20} className={darkMode ? blueTheme.iconText : 'text-blue-500'} />
-          </div>
-          <h2 className={`text-3xl font-black z-10 ${textValue}`}>{formatCurrency(totalReceita)}</h2>
-        </div>
-
-        {/* Custo Card */}
-        <div className={`p-6 rounded-2xl border relative overflow-hidden flex flex-col h-32 ${panelBg} ${darkMode ? orangeTheme.glow : ''}`}>
-          <div className="flex items-start justify-between z-10 mb-2">
-            <p className={`text-sm font-semibold tracking-wider uppercase ${textTitle}`}>Custo Global</p>
-            <Flame size={20} className={darkMode ? orangeTheme.iconText : 'text-orange-500'} />
-          </div>
-          <h2 className={`text-3xl font-black z-10 ${textValue}`}>{formatCurrency(totalCustoGlobal)}</h2>
-        </div>
-
-        {/* Margem Card */}
-        <div className={`p-6 rounded-2xl border relative overflow-hidden flex flex-col h-32 ${panelBg} ${darkMode ? greenTheme.glow : ''}`}>
-          <div className="flex items-start justify-between z-10 mb-2">
-            <p className={`text-sm font-semibold tracking-wider uppercase ${textTitle}`}>Lucro Real</p>
-            <TrendingUp size={20} className={darkMode ? greenTheme.iconText : 'text-emerald-500'} />
-          </div>
-          <h2 className={`text-3xl font-black z-10 ${totalMargemReal >= 0 ? textValue : 'text-red-500'}`}>{formatCurrency(totalMargemReal)}</h2>
-        </div>
-
-        {/* SLA Card */}
-        <div className={`p-6 rounded-2xl border relative overflow-hidden flex flex-col h-32 ${panelBg} ${darkMode ? purpleTheme.glow : ''}`}>
-          <div className="flex items-start justify-between z-10 mb-2">
-            <p className={`text-sm font-semibold tracking-wider uppercase ${textTitle}`}>SLA Entregas</p>
-            <CheckCircle size={20} className={darkMode ? purpleTheme.iconText : 'text-purple-500'} />
-          </div>
-          <h2 className={`text-3xl font-black z-10 ${sla >= 95 ? (darkMode ? 'text-purple-400' : 'text-purple-600') : 'text-yellow-500'}`}>{sla.toFixed(2)}%</h2>
-        </div>
-
+      {/* KPI Row */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <Win2kKpi label="Faturado Total" value={formatCurrency(totalReceita)} color="#000080" />
+        <Win2kKpi label="Custo Global" value={formatCurrency(totalCustoGlobal)} color="#800000" />
+        <Win2kKpi label="Lucro Real" value={formatCurrency(totalMargemReal)} color={totalMargemReal >= 0 ? '#006400' : '#800000'} />
+        <Win2kKpi label="SLA Entregas" value={`${sla.toFixed(2)}%`} color={sla >= 95 ? '#006400' : '#808000'} />
       </div>
 
-      {/* Middle Ribbon: Global Costs & Ticket Averages */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Middle Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         
-        {/* Fixed Costs Editor */}
-        <div className={`p-6 rounded-2xl border flex flex-col ${panelBg}`}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className={`p-2 rounded-lg ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-              <Factory size={18} />
-            </div>
-            <div>
-              <h3 className={`text-sm font-bold uppercase tracking-wider ${textValue}`}>Custos Fixos da Frota</h3>
-              <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Despesas globais que abatem do lucro dos motoristas</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
+        {/* Fixed Costs */}
+        <Win2kPanel title="Custos Fixos da Frota">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
             <CostInput label="Aluguel" field="aluguel" value={globalCosts.aluguel} />
             <CostInput label="Combustível" field="combustivel" value={globalCosts.combustivel} />
             <CostInput label="Manutenção" field="manutencao" value={globalCosts.manutencao} />
             <CostInput label="Seguro" field="seguro" value={globalCosts.seguro} />
           </div>
-        </div>
+        </Win2kPanel>
 
-        {/* Margins & Ticket Averages */}
-        <div className={`p-6 rounded-2xl border flex flex-col ${panelBg}`}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className={`p-2 rounded-lg ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-              <Target size={18} />
-            </div>
-            <div>
-              <h3 className={`text-sm font-bold uppercase tracking-wider ${textValue}`}>Radiografia de Margem (%) e Ticket</h3>
-              <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Impacto dos custos e média por pacote entregue</p>
-            </div>
-          </div>
-          
-          <div className="flex gap-4 h-full">
-            {/* Margins */}
-            <div className={`flex flex-col justify-center space-y-4 pr-6 border-r ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+        {/* Margin & Ticket */}
+        <Win2kPanel title="Radiografia de Margem (%) e Ticket">
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <div style={{ paddingRight: 12, borderRight: '1px solid #808080', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div>
-                <p className={`text-xs font-semibold uppercase ${textTitle}`}>% Custo Global</p>
-                <p className={`text-xl font-bold ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>{pctCustoTotal.toFixed(2)}%</p>
+                <div style={{ fontSize: '10px', color: '#808080', fontWeight: 'bold', textTransform: 'uppercase' }}>% Custo Global</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#800000', fontFamily: "'Courier New', monospace" }}>{pctCustoTotal.toFixed(2)}%</div>
               </div>
               <div>
-                <p className={`text-xs font-semibold uppercase ${textTitle}`}>% Lucro Base</p>
-                <p className={`text-xl font-bold ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{pctMargemReal.toFixed(2)}%</p>
+                <div style={{ fontSize: '10px', color: '#808080', fontWeight: 'bold', textTransform: 'uppercase' }}>% Lucro Base</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#006400', fontFamily: "'Courier New', monospace" }}>{pctMargemReal.toFixed(2)}%</div>
               </div>
             </div>
-
-            {/* Tickets */}
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center pl-2">
-              <div className={`p-3 rounded-xl ${darkMode ? 'bg-slate-800/50 text-slate-300' : 'bg-slate-50 text-slate-700'}`}>
-                 <p className="text-[10px] font-bold uppercase opacity-70 mb-1">Tck Faturado</p>
-                 <p className="text-lg font-bold">{formatCurrency(tckReceita)}</p>
-              </div>
-              <div className={`p-3 rounded-xl ${darkMode ? 'bg-slate-800/50 text-orange-400' : 'bg-slate-50 text-orange-600'}`}>
-                 <p className="text-[10px] font-bold uppercase opacity-70 mb-1">Tck Custo</p>
-                 <p className="text-lg font-bold">{formatCurrency(tckCusto)}</p>
-              </div>
-              <div className={`p-3 rounded-xl flex flex-col justify-center border ${darkMode ? 'border-emerald-500/30 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)] text-emerald-400' : 'border-green-200 bg-green-50 text-green-700'}`}>
-                 <p className="text-[10px] font-bold uppercase opacity-70 mb-1">Tck Lucro</p>
-                 <p className="text-xl font-black">{formatCurrency(tckLucro)}</p>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, flex: 1 }}>
+              {[
+                { label: 'Tck Faturado', value: formatCurrency(tckReceita), color: '#000080' },
+                { label: 'Tck Custo', value: formatCurrency(tckCusto), color: '#800000' },
+                { label: 'Tck Lucro', value: formatCurrency(tckLucro), color: '#006400' },
+              ].map(item => (
+                <div key={item.label} style={{
+                  background: '#ffffff',
+                  borderTop: '2px solid #808080',
+                  borderLeft: '2px solid #808080',
+                  borderRight: '2px solid #e8e4dc',
+                  borderBottom: '2px solid #e8e4dc',
+                  boxShadow: 'inset 1px 1px 0 #404040',
+                  padding: '4px 6px',
+                }}>
+                  <div style={{ fontSize: '9px', color: '#808080', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 2 }}>{item.label}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold', color: item.color, fontFamily: "'Courier New', monospace" }}>{item.value}</div>
+                </div>
+              ))}
             </div>
           </div>
-
-        </div>
-
+        </Win2kPanel>
       </div>
 
-      {/* Main Analysis Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Charts Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         
-        {/* Receita por Operacao */}
-        <div className={`p-6 rounded-2xl border h-96 flex flex-col ${panelBg}`}>
-          <h3 className={`text-sm font-semibold tracking-wider uppercase mb-6 ${textTitle}`}>Receita por Operação</h3>
-          <div className="flex-1 min-h-0">
+        {/* Receita por Operação */}
+        <Win2kPanel title="Receita por Operação">
+          <div style={{ height: 260, marginTop: 4 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={operacaoData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#334155' : '#e2e8f0'} />
-                <XAxis dataKey="name" tick={{fill: darkMode ? '#94a3b8' : '#64748b', fontSize: 11}} tickLine={false} axisLine={false} />
-                <YAxis tick={{fill: darkMode ? '#94a3b8' : '#64748b', fontSize: 11}} tickLine={false} axisLine={false} tickFormatter={(val) => `R$${(val/1000).toFixed(0)}k`} />
-                <Tooltip 
-                  cursor={{fill: darkMode ? '#1e293b' : '#f1f5f9'}}
-                  contentStyle={{ backgroundColor: darkMode ? '#0f172a' : '#ffffff', border: darkMode ? '1px solid #334155' : 'none', borderRadius: '8px', color: darkMode ? '#f8fafc' : '#0f172a' }}
-                  formatter={(val: any) => `R$ ${Number(val).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`}
-                />
-                <Bar dataKey="receita" name="Receita" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={32} />
+              <BarChart data={operacaoData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#c0bdb5" />
+                <XAxis dataKey="name" tick={{ fill: '#000000', fontSize: 9, fontFamily: "'Tahoma', Arial" }} tickLine={false} axisLine={{ stroke: '#808080' }} />
+                <YAxis tick={{ fill: '#000000', fontSize: 9, fontFamily: "'Tahoma', Arial" }} tickLine={false} axisLine={{ stroke: '#808080' }} tickFormatter={val => `R$${(val/1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={chartTooltipStyle} formatter={(val: number) => `R$ ${Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                <Bar dataKey="receita" name="Receita" fill="#000080" radius={0} barSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Win2kPanel>
 
-        {/* Margem por Contrato (Horizontal) */}
-        <div className={`p-6 rounded-2xl border h-96 flex flex-col ${panelBg}`}>
-          <h3 className={`text-sm font-semibold tracking-wider uppercase mb-6 ${textTitle}`}>Margem por Contrato</h3>
-          <div className="flex-1 min-h-0">
+        {/* Margem por Contrato */}
+        <Win2kPanel title="Margem por Contrato">
+          <div style={{ height: 260, marginTop: 4 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart layout="vertical" data={contratoData} margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+              <BarChart layout="vertical" data={contratoData} margin={{ top: 0, right: 24, left: 8, bottom: 0 }}>
                 <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#94a3b8' : '#64748b', fontSize: 11}} width={80} />
-                <Tooltip 
-                  cursor={{fill: darkMode ? '#1e293b' : '#f1f5f9'}}
-                  contentStyle={{ backgroundColor: darkMode ? '#0f172a' : '#ffffff', border: darkMode ? '1px solid #334155' : 'none', borderRadius: '8px', color: darkMode ? '#f8fafc' : '#0f172a' }}
-                  formatter={(val: any) => `R$ ${Number(val).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`}
-                />
-                <Bar dataKey="margem" name="Margem R$" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24} />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#000000', fontSize: 9, fontFamily: "'Tahoma', Arial" }} width={70} />
+                <Tooltip contentStyle={chartTooltipStyle} formatter={(val: number) => `R$ ${Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                <Bar dataKey="margem" name="Margem R$" fill="#006400" radius={0} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Win2kPanel>
 
-        {/* Análise por Equipe de Vendas (Motoristas) */}
-        <div className={`p-6 rounded-2xl border h-96 flex flex-col ${panelBg}`}>
-          <h3 className={`text-sm font-semibold tracking-wider uppercase mb-6 ${textTitle}`}>Análise por Motorista</h3>
-          
-          <div className="flex-1 overflow-auto custom-scrollbar pr-2">
-            <div className="w-full text-left text-xs">
-              
-              {/* Table Header */}
-              <div className={`flex justify-between pb-2 mb-3 border-b uppercase font-bold tracking-wider ${darkMode ? 'border-slate-700 text-slate-500' : 'border-slate-200 text-slate-400'}`}>
-                <div className="w-1/3">Motorista</div>
-                <div className="w-1/4 text-right">Líquido</div>
-                <div className="w-1/4 text-right">Margem</div>
-                <div className="w-1/6 text-right">%</div>
-              </div>
-
-              {/* Table Rows */}
-              <div className="space-y-3">
+        {/* Análise por Motorista */}
+        <Win2kPanel title="Análise por Motorista">
+          <div style={{ maxHeight: 260, overflowY: 'auto', marginTop: 4 }}>
+            {/* Table Header */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', fontFamily: "'Tahoma', 'MS Sans Serif', Arial" }}>
+              <thead>
+                <tr style={{ background: '#0a246a', color: '#ffffff' }}>
+                  <th style={{ padding: '2px 4px', textAlign: 'left', fontWeight: 'bold', fontSize: '9px', textTransform: 'uppercase' }}>Motorista</th>
+                  <th style={{ padding: '2px 4px', textAlign: 'right', fontWeight: 'bold', fontSize: '9px', textTransform: 'uppercase' }}>Líquido</th>
+                  <th style={{ padding: '2px 4px', textAlign: 'right', fontWeight: 'bold', fontSize: '9px', textTransform: 'uppercase' }}>Margem</th>
+                  <th style={{ padding: '2px 4px', textAlign: 'right', fontWeight: 'bold', fontSize: '9px', textTransform: 'uppercase' }}>%</th>
+                </tr>
+              </thead>
+              <tbody>
                 {motoristasData.map((m, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-sm group">
-                    <div className="w-1/3 font-medium truncate pr-2" title={m.name}>
-                      {m.name}
-                    </div>
-                    
-                    {/* Receita Inline Bar */}
-                    <div className="w-1/4 flex flex-col items-end justify-center">
-                      <span className="mb-1 leading-none text-xs">{formatCurrency(m.receita)}</span>
-                      <div className={`h-1.5 w-full rounded-full flex justify-end ${darkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${m.pctReceitaWidth}%` }}></div>
-                      </div>
-                    </div>
-
-                    {/* Margem Inline Bar */}
-                    <div className="w-1/4 flex flex-col items-end justify-center pl-4">
-                      <span className="mb-1 leading-none text-xs">{formatCurrency(m.margem)}</span>
-                      <div className={`h-1.5 w-full rounded-full flex justify-end ${darkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                        <div className={`h-full rounded-full ${m.margem >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${Math.max(m.pctMargemWidth, 2)}%` }}></div>
-                      </div>
-                    </div>
-
-                    <div className={`w-1/6 text-right font-bold pl-2 ${m.margemPctVal >= 0 ? (darkMode ? 'text-pink-400' : 'text-pink-600') : 'text-red-500'}`}>
-                      {m.margemPctVal.toFixed(0)}%
-                    </div>
-                  </div>
+                  <tr key={idx} style={{ background: idx % 2 === 0 ? '#ffffff' : '#e8e4dc' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = '#0a246a'; (e.currentTarget as HTMLTableRowElement).style.color = '#ffffff'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = idx % 2 === 0 ? '#ffffff' : '#e8e4dc'; (e.currentTarget as HTMLTableRowElement).style.color = '#000000'; }}>
+                    <td style={{ padding: '2px 4px', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'right', color: '#000080' }}>{formatCurrency(m.receita)}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'right', color: m.margem >= 0 ? '#006400' : '#800000' }}>{formatCurrency(m.margem)}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'right', fontWeight: 'bold', color: m.margemPctVal >= 0 ? '#006400' : '#800000' }}>{m.margemPctVal.toFixed(0)}%</td>
+                  </tr>
                 ))}
-              </div>
-
-            </div>
+              </tbody>
+              <tfoot>
+                <tr style={{ background: '#d4d0c8', fontWeight: 'bold', borderTop: '2px solid #808080' }}>
+                  <td style={{ padding: '2px 4px', color: '#000080', fontWeight: 'bold' }}>TOTAL</td>
+                  <td style={{ padding: '2px 4px', textAlign: 'right', color: '#000080' }}>{formatCurrency(totalReceita)}</td>
+                  <td style={{ padding: '2px 4px', textAlign: 'right', color: '#006400' }}>{formatCurrency(records.reduce((a,r) => a+r.lucroBruto, 0))}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
-          
-          {/* Table Footer / Summary */}
-          <div className={`mt-4 pt-3 border-t flex justify-between font-bold text-xs ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-            <span>Gross Total</span>
-            <span className="text-blue-500">{formatCurrency(totalReceita)}</span>
-            <span className="text-emerald-500">{formatCurrency(records.reduce((a,r) => a+r.lucroBruto, 0))}</span>
-          </div>
-
-        </div>
+        </Win2kPanel>
 
       </div>
     </div>

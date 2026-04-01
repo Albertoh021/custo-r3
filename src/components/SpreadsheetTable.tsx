@@ -26,20 +26,16 @@ export const SpreadsheetTable = ({
   columnFilters,
   onToggleFilter,
   onClearFilter,
-  darkMode 
 }: SpreadsheetTableProps) => {
 
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  
   const [filterModalField, setFilterModalField] = useState<keyof LogisticsRecord | null>(null);
 
-  // Aggregations
   const totalDias = records.reduce((acc, r) => acc + r.diasTrabalhados, 0);
   const totalEntregas = records.reduce((acc, r) => acc + r.entregas, 0);
   const totalFaturado = records.reduce((acc, r) => acc + r.valorFaturado, 0);
   const totalInsucessos = records.reduce((acc, r) => acc + r.insucessos, 0);
-  
   const totalVlrDiarias = records.reduce((acc, r) => acc + r.vlrDasDiarias, 0);
   const totalVlrEntregas = records.reduce((acc, r) => acc + r.vlrEntregas, 0);
   const totalBonus = records.reduce((acc, r) => acc + r.bonus, 0);
@@ -50,219 +46,244 @@ export const SpreadsheetTable = ({
   const totalMudanca = records.reduce((acc, r) => acc + r.mudanca, 0);
   const totalOutros = records.reduce((acc, r) => acc + r.outrosValores, 0);
   const totalDescontos = records.reduce((acc, r) => acc + r.descontos, 0);
-  
   const totalVlrTotal = records.reduce((acc, r) => acc + r.vlrTotal, 0);
   const totalLucro = records.reduce((acc, r) => acc + r.lucroBruto, 0);
 
   const handleSort = (field: keyof LogisticsRecord) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
+    if (sortField === field) setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDirection('asc'); }
   };
 
   const sortedRecords = useMemo(() => {
     if (!sortField) return records;
     return [...records].sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-      }
+      const aVal = a[sortField], bVal = b[sortField];
+      if (typeof aVal === 'string' && typeof bVal === 'string') return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      if (typeof aVal === 'number' && typeof bVal === 'number') return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       return 0;
     });
   }, [records, sortField, sortDirection]);
 
   const SortIcon = ({ field }: { field: keyof LogisticsRecord }) => {
-    if (sortField !== field) return <ArrowUpDown size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />;
-    return sortDirection === 'asc' ? <ArrowDownAZ size={14} className="text-blue-500" /> : <ArrowUpZA size={14} className="text-blue-500" />;
+    if (sortField !== field) return <ArrowUpDown size={10} style={{ opacity: 0.4 }} />;
+    return sortDirection === 'asc' ? <ArrowDownAZ size={10} style={{ color: '#0000ff' }} /> : <ArrowUpZA size={10} style={{ color: '#0000ff' }} />;
   };
 
-  const Th = ({ field, label, widthClass = 'min-w-[120px]', sticky = false }: { field?: keyof LogisticsRecord; label: string; widthClass?: string; sticky?: boolean }) => {
+  const thStyle: React.CSSProperties = {
+    background: '#0a246a',
+    color: '#ffffff',
+    fontFamily: "'Tahoma', 'MS Sans Serif', Arial, sans-serif",
+    fontSize: '10px',
+    fontWeight: 'bold',
+    padding: '3px 6px',
+    borderRight: '1px solid #1a3888',
+    borderBottom: '2px solid #404040',
+    whiteSpace: 'nowrap',
+    cursor: 'pointer',
+    userSelect: 'none',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.3px',
+  };
+
+  const Th = ({ field, label }: { field?: keyof LogisticsRecord; label: string }) => {
     const isFiltered = field && columnFilters[field] && columnFilters[field]!.length > 0;
-    
     return (
-      <th 
-        className={`p-3 border-r select-none whitespace-normal align-middle ${widthClass} 
-          ${darkMode ? 'border-slate-700 bg-slate-900 group hover:bg-slate-800' : 'border-slate-200 bg-slate-50 group hover:bg-slate-100'} 
-          ${sticky ? `sticky left-0 z-30 ${darkMode ? 'shadow-[2px_0_5px_rgba(0,0,0,0.5)]' : 'shadow-[2px_0_5px_rgba(0,0,0,0.05)]'}` : ''}`}
-      >
-        <div className="flex items-center justify-between gap-2 leading-tight">
-          <div className="flex-1 cursor-pointer flex items-center gap-1" onClick={() => field && handleSort(field)}>
-            <span className={isFiltered ? 'text-blue-500 font-extrabold' : ''}>{label}</span>
-            {field && <SortIcon field={field} />}
-          </div>
-          
-          {field && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); setFilterModalField(field); }}
-              className={`p-1 rounded transition-colors ${isFiltered ? (darkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-100 text-blue-600') : (darkMode ? 'text-slate-500 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-200')} opacity-50 group-hover:opacity-100`}
-            >
-              <Filter size={14} />
-            </button>
-          )}
+      <th style={{ ...thStyle, background: isFiltered ? '#1a4a8a' : '#0a246a' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <span style={{ cursor: 'pointer', flex: 1 }} onClick={() => field && handleSort(field)}>
+            {isFiltered ? '▼ ' : ''}{label}
+          </span>
+          {field && <span style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <SortIcon field={field} />
+            <Filter size={9} style={{ cursor: 'pointer', opacity: 0.7 }} onClick={() => setFilterModalField(field)} />
+          </span>}
         </div>
       </th>
     );
   };
 
-  // Extract unique values for filtering modal
   const uniqueValues = useMemo(() => {
     if (!filterModalField) return [];
-    const vals = Array.from(new Set(allRecords.map(r => String(r[filterModalField] || ''))));
-    return vals.sort((a, b) => a.localeCompare(b));
+    return Array.from(new Set(allRecords.map(r => String(r[filterModalField] || '')))).sort((a, b) => a.localeCompare(b));
   }, [allRecords, filterModalField]);
+
+  const tdStyle: React.CSSProperties = {
+    padding: '2px 6px',
+    borderRight: '1px solid #c0bdb5',
+    borderBottom: '1px solid #c0bdb5',
+    fontFamily: "'Tahoma', 'MS Sans Serif', Arial, sans-serif",
+    fontSize: '11px',
+    color: '#000000',
+    whiteSpace: 'nowrap',
+  };
 
   return (
     <>
-      <div className={`rounded-2xl shadow-sm border overflow-hidden flex flex-col ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-        <div className="overflow-auto max-h-[65vh] custom-scrollbar">
-          <table className="w-full text-left whitespace-nowrap min-w-max text-sm relative border-collapse">
-            
-            <thead className={`sticky top-0 z-20 shadow-sm uppercase text-[10px] font-bold tracking-wider ${darkMode ? 'bg-slate-900 text-slate-400 border-b-2 border-slate-700' : 'bg-slate-50 text-slate-600 border-b-2 border-slate-300'}`}>
+      {/* Win2K Table Container - inset border */}
+      <div style={{
+        borderTop: '2px solid #808080',
+        borderLeft: '2px solid #808080',
+        borderRight: '2px solid #ffffff',
+        borderBottom: '2px solid #ffffff',
+        boxShadow: 'inset 1px 1px 0 #404040',
+        overflow: 'hidden',
+      }}>
+        <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '60vh', background: '#ffffff' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 'max-content', tableLayout: 'auto' }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
               <tr>
-                <Th field="motorista" label="Motorista" widthClass="min-w-[180px]" sticky />
-                <Th field="tipoContrato" label="Tipo Contrato" widthClass="min-w-[120px]" />
-                <Th field="veiculo" label="Veículo" widthClass="min-w-[100px]" />
-                <Th field="operacao" label="Operação" widthClass="min-w-[120px]" />
-                
-                <Th field="vlrDiaria" label="Vlr Diária" widthClass="min-w-[100px]" />
-                <Th field="diasTrabalhados" label="Dias Trabalhados" widthClass="min-w-[100px]" />
-                <Th field="entregas" label="Entregas" widthClass="min-w-[80px]" />
-                <Th field="valorFaturado" label="Valor Faturado" widthClass="min-w-[110px]" />
-                <Th field="insucessos" label="Insucessos" widthClass="min-w-[90px]" />
-                
-                <Th field="vlrDasDiarias" label="Vlr das Diárias" widthClass="min-w-[110px]" />
-                
-                <Th field="vlrEntregas" label="Vlr Entregas" widthClass="min-w-[100px]" />
-                <Th field="bonus" label="Bônus" widthClass="min-w-[90px]" />
-                <Th field="coletas" label="Coletas" widthClass="min-w-[80px]" />
-                <Th field="vlrColetas" label="Vlr Coletas" widthClass="min-w-[100px]" />
-                <Th field="vlrSabado" label="Vlr Sábado" widthClass="min-w-[100px]" />
-                <Th field="pedagio" label="Pedágio" widthClass="min-w-[90px]" />
-                <Th field="mudanca" label="Mudança" widthClass="min-w-[90px]" />
-                <Th field="outrosValores" label="Outros Valores" widthClass="min-w-[110px]" />
-                <Th field="descontos" label="Descontos" widthClass="min-w-[100px]" />
-                
-                <Th field="vlrTotal" label="Vlr Total Motorista" widthClass="min-w-[130px]" />
-                <Th field="tckMedio" label="Tck Médio" widthClass="min-w-[90px]" />
-                <Th field="lucroBruto" label="Lucro Bruto" widthClass="min-w-[110px]" />
-                <Th field="pctCusto" label="% Custo" widthClass="min-w-[80px]" />
-                
-                <Th field="entregasDia" label="Entregas / Dia" widthClass="min-w-[100px]" />
-                <Th field="coletasDia" label="Coletas / Dia" widthClass="min-w-[100px]" />
-                
-                <Th field="regiaoEntrega" label="Região Entrega" widthClass="min-w-[120px]" />
-                <Th field="cep" label="CEP" widthClass="min-w-[100px]" />
-                <Th field="pctColetados" label="% Coletados" widthClass="min-w-[100px]" />
-                <Th field="pctPorPonto" label="% Por Ponto" widthClass="min-w-[100px]" />
-                
-                <th className={`p-3 w-10 border-b ${darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}></th>
+                <Th field="motorista" label="Motorista" />
+                <Th field="tipoContrato" label="Tipo Contrato" />
+                <Th field="veiculo" label="Veículo" />
+                <Th field="operacao" label="Operação" />
+                <Th field="vlrDiaria" label="Vlr Diária" />
+                <Th field="diasTrabalhados" label="Dias Trab." />
+                <Th field="entregas" label="Entregas" />
+                <Th field="valorFaturado" label="Vlr Faturado" />
+                <Th field="insucessos" label="Insucessos" />
+                <Th field="vlrDasDiarias" label="Vlr Diárias" />
+                <Th field="vlrEntregas" label="Vlr Entregas" />
+                <Th field="bonus" label="Bônus" />
+                <Th field="coletas" label="Coletas" />
+                <Th field="vlrColetas" label="Vlr Coletas" />
+                <Th field="vlrSabado" label="Vlr Sábado" />
+                <Th field="pedagio" label="Pedágio" />
+                <Th field="mudanca" label="Mudança" />
+                <Th field="outrosValores" label="Outros Vlr." />
+                <Th field="descontos" label="Descontos" />
+                <Th field="vlrTotal" label="Vlr Total" />
+                <Th field="tckMedio" label="Tck Médio" />
+                <Th field="lucroBruto" label="Lucro Bruto" />
+                <Th field="pctCusto" label="% Custo" />
+                <Th field="entregasDia" label="Entr./Dia" />
+                <Th field="coletasDia" label="Col./Dia" />
+                <Th field="regiaoEntrega" label="Região" />
+                <Th field="cep" label="CEP" />
+                <Th field="pctColetados" label="% Colet." />
+                <Th field="pctPorPonto" label="% Ponto" />
+                <th style={{ ...thStyle, width: 30 }}></th>
               </tr>
             </thead>
-            
-            <tbody className="relative z-0">
+
+            <tbody>
               {sortedRecords.length > 0 ? (
-                sortedRecords.map(record => (
+                sortedRecords.map((record, idx) => (
                   <TableRow 
                     key={record.id} 
                     record={record} 
                     onChange={onUpdateRecord}
                     onDelete={onDeleteRecord} 
-                    darkMode={darkMode}
+                    darkMode={false}
+                    // Pass Win2K style override via style prop
+                    style={{ background: idx % 2 === 0 ? '#ffffff' : '#e8e4dc' }}
                   />
                 ))
               ) : (
                 <tr>
-                  <td colSpan={30} className={`p-8 text-center ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                    Nenhum registro encontrado. Adicione uma linha ou ajuste seus filtros.
+                  <td colSpan={30} style={{ ...tdStyle, textAlign: 'center', padding: '20px', color: '#808080', fontStyle: 'italic', background: '#ffffff' }}>
+                    Nenhum registro encontrado. Adicione uma linha ou importe um CSV.
                   </td>
                 </tr>
               )}
             </tbody>
 
-            <tfoot className={`sticky bottom-0 z-20 font-bold text-xs shadow-[0_-2px_10px_rgba(0,0,0,0.1)] ${darkMode ? 'bg-slate-800 text-slate-300 border-t border-slate-700' : 'bg-slate-200 text-slate-800 border-t border-slate-300'}`}>
-              <tr>
-                <td colSpan={5} className="p-3 text-right">TOTAIS (Filtrados):</td>
-                
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{totalDias}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{totalEntregas}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right ${darkMode ? 'text-indigo-400' : 'text-blue-700'}`}>{formatCurrency(totalFaturado)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{totalInsucessos}</td>
-                
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{formatCurrency(totalVlrDiarias)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{formatCurrency(totalVlrEntregas)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{formatCurrency(totalBonus)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{totalColetas}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{formatCurrency(totalVlrColetas)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{formatCurrency(totalSabado)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{formatCurrency(totalPedagio)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{formatCurrency(totalMudanca)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>{formatCurrency(totalOutros)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right ${darkMode ? 'text-red-400' : 'text-red-600'}`}>-{formatCurrency(totalDescontos)}</td>
-                
-                <td className={`p-3 border-r text-right ${darkMode ? 'border-slate-700 bg-slate-700/50 text-white' : 'border-slate-300 bg-slate-300/50 text-slate-900'}`}>{formatCurrency(totalVlrTotal)}</td>
-                <td className={`p-3 border-r ${darkMode ? 'border-slate-700' : 'border-slate-300'} text-right`}>-</td>
-                <td className={`p-3 border-r text-right ${darkMode ? 'border-slate-700 bg-slate-700/50' : 'border-slate-300 bg-slate-300/50'} ${totalLucro >= 0 ? (darkMode ? 'text-green-400' : 'text-green-700') : (darkMode ? 'text-red-400' : 'text-red-700')}`}>
-                  {formatCurrency(totalLucro)}
-                </td>
-                <td colSpan={7}></td>
+            {/* Totals Footer */}
+            <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 10 }}>
+              <tr style={{ background: '#d4d0c8', fontWeight: 'bold', borderTop: '2px solid #808080' }}>
+                <td colSpan={5} style={{ ...tdStyle, background: '#d4d0c8', color: '#000080', fontWeight: 'bold', textAlign: 'right', borderRight: '2px solid #808080' }}>TOTAIS:</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{totalDias}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{totalEntregas}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right', color: '#000080' }}>{formatCurrency(totalFaturado)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{totalInsucessos}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{formatCurrency(totalVlrDiarias)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{formatCurrency(totalVlrEntregas)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{formatCurrency(totalBonus)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{totalColetas}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{formatCurrency(totalVlrColetas)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{formatCurrency(totalSabado)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{formatCurrency(totalPedagio)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{formatCurrency(totalMudanca)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>{formatCurrency(totalOutros)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right', color: '#800000' }}>-{formatCurrency(totalDescontos)}</td>
+                <td style={{ ...tdStyle, background: '#bdb8ad', fontWeight: 'bold', textAlign: 'right', color: '#000080', borderLeft: '2px solid #808080', borderRight: '2px solid #808080' }}>{formatCurrency(totalVlrTotal)}</td>
+                <td style={{ ...tdStyle, background: '#d4d0c8', fontWeight: 'bold', textAlign: 'right' }}>-</td>
+                <td style={{ ...tdStyle, background: '#bdb8ad', fontWeight: 'bold', textAlign: 'right', color: totalLucro >= 0 ? '#006400' : '#800000' }}>{formatCurrency(totalLucro)}</td>
+                <td colSpan={7} style={{ background: '#d4d0c8' }}></td>
               </tr>
             </tfoot>
-
           </table>
         </div>
       </div>
 
-      {/* Filter Modal */}
+      {/* Win2K Filter Dialog */}
       {filterModalField && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className={`w-full max-w-sm rounded-2xl shadow-xl overflow-hidden ${darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-200'}`}>
-            <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-              <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-slate-800'}`}>Filtrar Coluna</h3>
-              <button onClick={() => setFilterModalField(null)} className={`p-1 rounded-md ${darkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}>
-                <X size={18} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}>
+          {/* Win2K Dialog Window */}
+          <div style={{
+            background: '#d4d0c8',
+            borderTop: '2px solid #ffffff',
+            borderLeft: '2px solid #ffffff',
+            borderRight: '2px solid #808080',
+            borderBottom: '2px solid #808080',
+            boxShadow: '4px 4px 0 rgba(0,0,0,0.5), inset -1px -1px 0 #404040, inset 1px 1px 0 #e8e4dc',
+            minWidth: 280,
+            maxWidth: 360,
+            overflow: 'hidden',
+            fontFamily: "'Tahoma', 'MS Sans Serif', Arial, sans-serif",
+          }}>
+            {/* Dialog Title Bar */}
+            <div className="win-titlebar">
+              <span style={{ fontSize: '10px' }}>🔍</span>
+              <span style={{ flex: 1, fontSize: '11px', fontWeight: 'bold' }}>Filtrar Coluna</span>
+              <button className="win-btn" onClick={() => setFilterModalField(null)}
+                style={{ width: 16, height: 14, padding: 0, fontSize: '9px', minHeight: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#800000', fontWeight: 'bold' }}>
+                <X size={10} />
               </button>
             </div>
             
-            <div className="max-h-[300px] overflow-auto p-2">
-              {uniqueValues.map((val, idx) => {
-                const isSelected = columnFilters[filterModalField]?.includes(val);
-                return (
-                  <div 
-                    key={idx} 
-                    onClick={() => onToggleFilter(filterModalField, val)}
-                    className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
-                  >
-                    {isSelected 
-                      ? <CheckSquare size={18} className={darkMode ? 'text-indigo-500' : 'text-blue-500'} /> 
-                      : <Square size={18} className={darkMode ? 'text-slate-600' : 'text-slate-300'} />
-                    }
-                    <span className={`text-sm ${darkMode ? 'text-slate-200' : 'text-slate-700'} ${val === '' ? 'italic opacity-60' : ''}`}>
-                      {val === '' ? '(Vazio)' : val}
-                    </span>
-                  </div>
-                );
-              })}
+            {/* Dialog Content */}
+            <div style={{ padding: '8px' }}>
+              <div style={{
+                background: '#ffffff',
+                borderTop: '2px solid #808080',
+                borderLeft: '2px solid #808080',
+                borderRight: '2px solid #e8e4dc',
+                borderBottom: '2px solid #e8e4dc',
+                boxShadow: 'inset 1px 1px 0 #404040',
+                maxHeight: 200,
+                overflowY: 'auto',
+                padding: '2px',
+              }}>
+                {uniqueValues.map((val, idx) => {
+                  const isSelected = columnFilters[filterModalField]?.includes(val);
+                  return (
+                    <div 
+                      key={idx}
+                      onClick={() => onToggleFilter(filterModalField, val)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '2px 4px', cursor: 'pointer', fontSize: '11px',
+                        background: isSelected ? '#0a246a' : 'transparent',
+                        color: isSelected ? '#ffffff' : '#000000',
+                      }}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#0a246a', e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent', e.currentTarget.style.color = '#000'; }}
+                    >
+                      {isSelected ? <CheckSquare size={12} /> : <Square size={12} />}
+                      <span style={{ fontStyle: val === '' ? 'italic' : 'normal', opacity: val === '' ? 0.6 : 1 }}>{val === '' ? '(Vazio)' : val}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className={`p-4 border-t flex gap-3 ${darkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50'}`}>
-              <button 
-                onClick={() => { onClearFilter(filterModalField); setFilterModalField(null); }}
-                className={`flex-1 py-2 text-sm font-medium rounded-xl border transition-colors ${darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}`}
-              >
-                Limpar Filtro
+            {/* Dialog Buttons */}
+            <div style={{ padding: '4px 8px 8px 8px', display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+              <button className="win-btn" onClick={() => { onClearFilter(filterModalField); setFilterModalField(null); }} style={{ minWidth: 80 }}>
+                Limpar
               </button>
-              <button 
-                onClick={() => setFilterModalField(null)}
-                className={`flex-1 py-2 text-sm font-medium text-white rounded-xl transition-colors shadow-sm ${darkMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                Aplicar
+              <button className="win-btn" onClick={() => setFilterModalField(null)} style={{ minWidth: 80, fontWeight: 'bold' }}>
+                OK
               </button>
             </div>
           </div>

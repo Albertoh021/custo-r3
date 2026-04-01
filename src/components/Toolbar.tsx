@@ -1,4 +1,3 @@
-import { Search, Download, Plus, Upload, Trash2, Sun, Moon } from 'lucide-react';
 import React, { useRef } from 'react';
 
 interface ToolbarProps {
@@ -14,157 +13,128 @@ interface ToolbarProps {
   setDarkMode: (value: boolean) => void;
 }
 
-export const Toolbar = ({ 
-  searchQuery, 
-  setSearchQuery, 
-  onAddRow, 
-  onExport, 
-  onImport,
-  onClearAll,
-  activeTab,
-  setActiveTab,
-  darkMode,
-  setDarkMode
+const TABS: { key: 'spreadsheet' | 'dashboard' | 'summary' | 'coletas' | 'insights' | 'performance'; label: string }[] = [
+  { key: 'spreadsheet', label: 'Planilha' },
+  { key: 'dashboard', label: 'Power BI' },
+  { key: 'summary', label: 'Resumo' },
+  { key: 'coletas', label: 'Coletas' },
+  { key: 'performance', label: 'Performance' },
+  { key: 'insights', label: 'Insights IA' },
+];
+
+export const Toolbar = ({
+  searchQuery, setSearchQuery, onAddRow, onExport, onImport,
+  onClearAll, activeTab, setActiveTab,
 }: ToolbarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      onImport(file);
-    }
-    // clear value to allow importing the same file again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (file) onImport(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
-    <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-      
-      {/* Search and Tabs Group */}
-      <div className="flex flex-col xl:flex-row gap-4 w-full 2xl:w-auto">
-        
-        {/* Navigation Tabs */}
-        <div className={`flex flex-wrap items-center ${darkMode ? 'bg-slate-800' : 'bg-slate-200/50'} p-1 rounded-xl w-full xl:w-auto transition-colors`}>
-          <button
-            onClick={() => setActiveTab('spreadsheet')}
-            className={`flex-1 sm:px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'spreadsheet' ? (darkMode ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-blue-600 shadow-sm') : (darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')}`}
-          >
-            Planilha
-          </button>
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`flex-1 sm:px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'dashboard' ? (darkMode ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-blue-600 shadow-sm') : (darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')}`}
-          >
-            Power BI
-          </button>
-          <button
-            onClick={() => setActiveTab('summary')}
-            className={`flex-1 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'summary' ? (darkMode ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-blue-600 shadow-sm') : (darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')}`}
-          >
-            Resumo
-          </button>
-          <button
-            onClick={() => setActiveTab('coletas')}
-            className={`flex-1 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'coletas' ? (darkMode ? 'bg-amber-600 text-white shadow-sm' : 'bg-white text-amber-600 shadow-sm') : (darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')}`}
-          >
-            Coletas
-          </button>
-          <button
-            onClick={() => setActiveTab('performance')}
-            className={`flex-1 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'performance' ? (darkMode ? 'bg-rose-600 text-white shadow-sm' : 'bg-white text-rose-600 shadow-sm') : (darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')} flex items-center justify-center gap-2`}
-          >
-            Performance
-          </button>
-          <button
-            onClick={() => setActiveTab('insights')}
-            className={`flex-1 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'insights' ? (darkMode ? 'bg-fuchsia-600 text-white shadow-sm' : 'bg-fuchsia-600 text-white shadow-sm') : (darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900')} flex items-center justify-center gap-2`}
-          >
-            Insights <span className="text-[10px] bg-white text-fuchsia-600 px-1.5 py-0.5 rounded-full font-black animate-pulse">IA</span>
-          </button>
+    <div style={{ marginBottom: 0 }}>
+      {/* Toolbar Row */}
+      <div style={{
+        background: '#d4d0c8',
+        borderTop: '2px solid #ffffff',
+        borderLeft: '2px solid #ffffff',
+        borderRight: '2px solid #808080',
+        borderBottom: '1px solid #808080',
+        boxShadow: 'inset -1px 0 0 #404040, inset 0 1px 0 #e8e4dc',
+        padding: '3px 4px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        flexWrap: 'wrap',
+        marginBottom: 0,
+      }}>
+        {/* Toolbar divider label */}
+        <div style={{ fontSize: '10px', color: '#808080', marginRight: 2, paddingRight: 6, borderRight: '1px solid #808080', height: 20, display: 'flex', alignItems: 'center' }}>
+          Ações
         </div>
 
-        {/* Search Input (Only show if Spreadsheet tab) */}
+        <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileChange} className="hidden" style={{ display: 'none' }} />
+        
+        <button className="win-btn" onClick={() => fileInputRef.current?.click()} title="Importar CSV">
+          📂 Importar CSV
+        </button>
+
         {activeTab === 'spreadsheet' && (
-          <div className="relative w-full sm:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className={`h-5 w-5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-            </div>
+          <button className="win-btn" onClick={onExport} title="Exportar CSV">
+            💾 Exportar CSV
+          </button>
+        )}
+
+        {activeTab === 'spreadsheet' && (
+          <button className="win-btn" onClick={onAddRow} title="Nova Linha"
+            style={{ background: '#d4d0c8', fontWeight: 'bold' }}>
+            ➕ Nova Linha
+          </button>
+        )}
+
+        {activeTab === 'spreadsheet' && (
+          <button className="win-btn" title="Limpar Tudo"
+            style={{ color: '#800000' }}
+            onClick={() => { if (window.confirm('Tem certeza que deseja apagar TODOS os registros?')) onClearAll(); }}>
+            🗑 Limpar Tudo
+          </button>
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        {/* Search box - only in spreadsheet */}
+        {activeTab === 'spreadsheet' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <label style={{ fontSize: '11px', color: '#000' }}>🔍 Buscar:</label>
             <input
               type="text"
-              className={`block w-full pl-10 pr-3 py-2.5 border rounded-xl leading-5 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all ${darkMode ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500'}`}
-              placeholder="Buscar por nome corporativo..."
+              className="win-input"
+              style={{ width: 200 }}
+              placeholder="Nome, contrato, veículo..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
             />
           </div>
         )}
       </div>
 
-      {/* Action Buttons Group */}
-      <div className="flex shrink-0 gap-3 w-full sm:w-auto flex-wrap">
-        
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className={`flex-1 sm:flex-none flex items-center justify-center p-2.5 border rounded-xl transition-colors text-sm font-medium ${darkMode ? 'bg-slate-800 border-slate-700 text-yellow-500 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-          title={darkMode ? 'Modo Claro' : 'Modo Escuro'}
-        >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
-        <input 
-          type="file" 
-          accept=".csv" 
-          ref={fileInputRef} 
-          onChange={handleFileChange}
-          className="hidden" 
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 border rounded-xl transition-colors text-sm font-medium ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-        >
-          <Upload size={18} />
-          <span className="hidden sm:inline">Importar CSV</span>
-        </button>
-
-        {activeTab === 'spreadsheet' && (
-          <button
-            onClick={onExport}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 border rounded-xl transition-colors text-sm font-medium ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-          >
-            <Download size={18} />
-            <span className="hidden sm:inline">Exportar CSV</span>
-          </button>
-        )}
-
-        {activeTab === 'spreadsheet' && (
-          <button
-            onClick={onAddRow}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-colors text-sm font-medium shadow-sm text-white ${darkMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-          >
-            <Plus size={18} />
-            Nova Linha
-          </button>
-        )}
-        
-        {activeTab === 'spreadsheet' && (
-          <button
-            onClick={() => {
-              if (window.confirm('Tem certeza que deseja apagar TODOS os registros?')) {
-                onClearAll();
-              }
-            }}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 border rounded-xl transition-colors text-sm font-medium shadow-sm ${darkMode ? 'bg-red-900/40 border-red-800 text-red-400 hover:bg-red-900/60' : 'bg-red-50 text-red-600 border border-red-100 hover:bg-red-100'}`}
-            title="Excluir Tudo"
-          >
-            <Trash2 size={18} />
-            <span className="hidden sm:inline">Limpar Tudo</span>
-          </button>
-        )}
+      {/* Tab Strip - Win2K style */}
+      <div style={{ display: 'flex', gap: 0, paddingLeft: 4, paddingTop: 4, background: '#d4d0c8', flexWrap: 'wrap' }}>
+        {TABS.map(tab => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                background: isActive ? '#d4d0c8' : '#bdb8ad',
+                borderTop: '2px solid ' + (isActive ? '#ffffff' : '#c0bdb5'),
+                borderLeft: '2px solid ' + (isActive ? '#ffffff' : '#c0bdb5'),
+                borderRight: '2px solid #808080',
+                borderBottom: isActive ? '2px solid #d4d0c8' : '2px solid #808080',
+                padding: isActive ? '4px 14px 5px 14px' : '3px 14px 4px 14px',
+                marginRight: 2,
+                marginBottom: isActive ? '-1px' : 0,
+                zIndex: isActive ? 2 : 1,
+                position: 'relative' as const,
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontFamily: "'Tahoma', 'MS Sans Serif', Arial, sans-serif",
+                fontWeight: isActive ? 'bold' : 'normal',
+                color: '#000000',
+                outline: 'none',
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+        {/* Tab bottom border fill */}
+        <div style={{ flex: 1, borderBottom: '2px solid #808080', marginBottom: 0 }} />
       </div>
-
     </div>
   );
 };
