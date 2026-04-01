@@ -1,0 +1,7 @@
+﻿src/components/DashboardView.tsx(68,17): error TS2322: Type '(val: number) => string' is not assignable to type 'Formatter<ValueType, NameType> & ((value: ValueType, name: NameType, item: TooltipPayloadEntry, index: number, payload: TooltipPayload) => ReactNode | [...])'.
+  Type '(val: number) => string' is not assignable to type 'Formatter<ValueType, NameType>'.
+    Types of parameters 'val' and 'value' are incompatible.
+      Type 'ValueType | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/DashboardView.tsx(92,59): error TS18048: 'percent' is possibly 'undefined'.
+src/components/DashboardView.tsx(95,34): error TS6133: 'entry' is declared but its value is never read.
